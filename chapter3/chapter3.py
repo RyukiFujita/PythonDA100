@@ -1,4 +1,7 @@
 import pandas as pd
+import matplotlib.pyplot as plt
+from dateutil.relativedelta import relativedelta
+from copy import copy
 
 # 1.データ読み込み
 use_log = pd.read_csv("use_log.csv")
@@ -67,4 +70,31 @@ use_log_weekday["routine_flag"] = 0
 use_log_weekday["routine_flag"] = use_log_weekday["routine_flag"].where(use_log_weekday["count"]<4, 1)
 print(use_log_weekday.head())
 
+# 7.顧客データと利用履歴データの結合
+customer_join = pd.merge(customer_join, use_log_customer, on="customer_id", how="left")
+customer_join = pd.merge(customer_join, use_log_weekday[["customer_id", "routine_flag"]], on="customer_id", how="left")
+print(customer_join.head())
 
+# 8.会員期間の計算
+customer_join["calc_date"] = customer_join["end_date"]
+customer_join["calc_date"] = customer_join["calc_date"].fillna(pd.to_datetime("20190430"))
+customer_join["membership_period"] = 0
+for i in range(len(customer_join)) :
+    delta = relativedelta(customer_join.loc[i, "calc_date"], customer_join.loc[i, "start_date"])
+    customer_join.loc[i, "membership_period"] = delta.years*12 + delta.months
+print(customer_join.head())
+
+# 9.顧客行動の各種統計量の把握
+print(customer_join[["mean", "median", "max", "min"]].describe())
+print(customer_join.groupby("routine_flag").count()["customer_id"])
+
+plt.hist(customer_join["membership_period"])
+plt.show()
+
+# 10.退会ユーザと継続ユーザの違いを把握する
+customer_end = customer_join.loc[customer_join["is_deleted"]==1]
+print(customer_end.describe())
+customer_stay = customer_join.loc[customer_join["is_deleted"]==0]
+print(customer_stay.describe())
+
+customer_join.to_csv("customer_join.csv", index=False)
