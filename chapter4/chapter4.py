@@ -1,8 +1,14 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
+from sklearn import linear_model
+import sklearn.model_selection
+
+from dateutil.relativedelta import relativedelta
+
 
 # 1.データ読み込み
 uselog = pd.read_csv('use_log.csv')
@@ -74,5 +80,29 @@ print(predict_data.head())
 predict_data = predict_data.dropna()
 predict_data = predict_data.reset_index(drop=True)
 print(predict_data.head())
+
+# 7.特徴となる変数の付与
+predict_data = pd.merge(predict_data, customer[["customer_id", "start_date"]], on="customer_id", how="left")
+predict_data["now_date"] = pd.to_datetime(predict_data["年月"], format="%Y%m")
+predict_data["start_date"] = pd.to_datetime(predict_data["start_date"])
+predict_data["period"] = None
+
+for i in range(len(predict_data)) :
+    delta = relativedelta(predict_data.loc[i,"now_date"], predict_data.loc[i, "start_date"])
+    predict_data.loc[i, "period"] = delta.years*12 + delta.months
+print(predict_data.head())
+
+predict_data = predict_data.loc[predict_data["start_date"]>=pd.to_datetime("20180401")]
+model = linear_model.LinearRegression()
+X = predict_data[["count_0", "count_1", "count_2", "count_3", "count_4", "count_5", "period"]]
+y = predict_data["count_pred"]
+X_train, X_test, y_train, y_test = sklearn.model_selection.train_test_split(X,y)
+model.fit(X_train, y_train)
+
+print(model.score(X_train, y_train))
+print(model.score(X_test, y_test))
+
+
+
 
 
