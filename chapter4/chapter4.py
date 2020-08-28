@@ -92,6 +92,7 @@ for i in range(len(predict_data)) :
     predict_data.loc[i, "period"] = delta.years*12 + delta.months
 print(predict_data.head())
 
+# 8.来月の利用回数予測モデルの作成
 predict_data = predict_data.loc[predict_data["start_date"]>=pd.to_datetime("20180401")]
 model = linear_model.LinearRegression()
 X = predict_data[["count_0", "count_1", "count_2", "count_3", "count_4", "count_5", "period"]]
@@ -101,6 +102,18 @@ model.fit(X_train, y_train)
 
 print(model.score(X_train, y_train))
 print(model.score(X_test, y_test))
+
+# 9.モデルに寄与している変数の確認
+coef = pd.DataFrame({"feature_names":X.columns, "coefficient":model.coef_})
+print(coef)
+
+# 10.来月の利用回数を予測しよう
+x1 = [3, 4, 4, 6, 8, 7, 8]
+x2 = [2, 2, 3, 3, 4, 6, 8]
+x_pred = [x1, x2]
+
+print(model.predict(x_pred))
+
 
 
 
