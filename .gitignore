@@ -1,4 +1,6 @@
 .DS_Store
+sample_100knocks/
+*.zip
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
